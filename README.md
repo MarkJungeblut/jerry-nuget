@@ -4,7 +4,8 @@ A collection of reusable .NET libraries for Jerry services.
 
 ## Projects
 
-- **Jerry.Library.Grpc** - gRPC library for service communication
+- **Jerry.Library.Grpc** - gRPC library for service communication (v8.0.0-alpha)
+- **Jerry.Library.Telemetry** - Telemetry and observability library (v8.0.0-beta)
 
 ## Build Requirements
 
@@ -33,15 +34,24 @@ library/src/[ProjectName]/bin/[Configuration]/[ProjectName].[Version].nupkg
 
 ## Versioning
 
-This repository uses [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) for semantic versioning.
+This repository uses [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) for **per-project semantic versioning**.
+
+### Per-Project Versioning
+- Each library has its own `version.json` file in its project directory
+- Version only increments when files in that specific library's directory change
+- This allows independent release cycles for each library
 
 ### Version Format
 - Development: `1.2.3-alpha.45+g1234abcd` (git height + commit SHA)
 - Release: `1.2.3` (clean version on tagged commits)
+- Git height only counts commits that touch the library's directory
 
 ### Updating Versions
-Use the nbgv tool to set major/minor/patch versions:
+Navigate to the library directory and update its version.json:
 ```bash
+cd library/src/Jerry.Library.Grpc
+# Edit version.json to change the version
+# OR use nbgv tool:
 dotnet tool install -g nbgv
 nbgv set-version 1.2.3
 ```
