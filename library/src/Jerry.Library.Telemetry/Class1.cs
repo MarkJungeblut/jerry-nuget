@@ -10,3 +10,4 @@ namespace Jerry.Library.Telemetry;
 public class Class1
 {
 }
+// Comment added
