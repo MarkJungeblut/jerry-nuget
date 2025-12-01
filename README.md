@@ -36,10 +36,18 @@ library/src/[ProjectName]/bin/[Configuration]/[ProjectName].[Version].nupkg
 
 This repository uses [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) for **per-project semantic versioning**.
 
-### Per-Project Versioning
+### Per-Project Versioning (Automatic)
 - Each library has its own `version.json` file in its project directory
-- Version only increments when files in that specific library's directory change
+- **Automatic**: Version only increments when commits modify files in that specific library's directory
+- The `pathFilters: ["."]` setting in each version.json ensures independent tracking
+- No manual intervention needed - just commit changes and build
 - This allows independent release cycles for each library
+
+#### How It Works
+1. You modify a file in `library/src/Jerry.Library.Grpc/`
+2. Commit the change
+3. Build → Only Grpc version increments (e.g., `8.0.0-alpha` → `8.0.0-alpha.1`)
+4. Telemetry version stays unchanged (still `8.0.0-beta`)
 
 ### Version Format
 - Development: `1.2.3-alpha.45+g1234abcd` (git height + commit SHA)
