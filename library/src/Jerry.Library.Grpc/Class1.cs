@@ -9,4 +9,12 @@ namespace Jerry.Library.Grpc;
 /// </summary>
 public class Class1
 {
+    /// <summary>
+    /// Gets a test message.
+    /// </summary>
+    /// <returns>A test message string.</returns>
+    public string GetMessage()
+    {
+        return "Hello from Grpc!";
+    }
 }
