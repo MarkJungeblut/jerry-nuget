@@ -5,7 +5,7 @@ A collection of reusable .NET libraries for Jerry services.
 ## Projects
 
 - **Jerry.Library.Grpc** - gRPC library for service communication (v8.0.0-alpha)
-- **Jerry.Library.Telemetry** - Telemetry and observability library (v8.0.0-beta)
+- **Jerry.Library.Telemetry** - Telemetry and observability library (v8.0.0-alpha)
 
 ## Build Requirements
 
@@ -47,7 +47,7 @@ This repository uses [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank
 1. You modify a file in `library/src/Jerry.Library.Grpc/`
 2. Commit the change
 3. Build → Only Grpc version increments (e.g., `8.0.0-alpha` → `8.0.0-alpha.1`)
-4. Telemetry version stays unchanged (still `8.0.0-beta`)
+4. Telemetry version stays unchanged (still `8.0.0-alpha`)
 
 ### Version Format
 - **Main branch**: `8.0.0-alpha.45+g1234abcd` (always prerelease with git height + commit SHA)
