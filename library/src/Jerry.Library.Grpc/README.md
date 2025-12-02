@@ -19,7 +19,7 @@ dotnet add package Jerry.Library.Grpc
 
 ## Development
 
-This project follows standard .NET development practices with StyleCop enforcement.
+This project follows standard .NET development practices with code style enforcement via .editorconfig.
 
 ## Testing
 
