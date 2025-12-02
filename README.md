@@ -154,11 +154,12 @@ nbgv set-version 8.2.0
 
 ## Code Quality
 
-- **StyleCop.Analyzers** - Enforces C# style and consistency rules
+- **.editorconfig** - Enforces C# style and consistency rules via IDE and build
 - **Central Package Management** - All package versions managed in Directory.Packages.props
+- **EnforceCodeStyleInBuild** - Code style violations treated as build errors
 
 ## Contributing
 
 1. Follow the existing project structure
 2. Ensure all tests pass
-3. Follow StyleCop guidelines (warnings treated as errors)
+3. Follow .editorconfig code style guidelines (enforced during build)
