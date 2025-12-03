@@ -14,8 +14,8 @@ using Microsoft.Extensions.Logging;
 /// <remarks>
 /// <para>
 /// This interceptor provides centralized exception handling for all gRPC services in your application.
-/// It catches exceptions thrown by service methods, logs them with appropriate log levels, and converts
-/// them to gRPC status codes that clients can handle.
+/// It catches exceptions thrown by service methods (unary, server streaming, client streaming, and duplex streaming),
+/// logs them with appropriate log levels, and converts them to gRPC status codes that clients can handle.
 /// </para>
 /// <para><strong>Exception Mapping:</strong></para>
 /// <list type="table">
@@ -105,41 +105,127 @@ public class ExceptionLoggingInterceptor : Interceptor
         {
             return await continuation(request, context);
         }
-        catch (RpcException ex)
+        catch (Exception ex)
         {
-            _logger.LogWarning(
-                ex,
-                "gRPC call to {Method} failed with status {StatusCode}: {Detail}",
-                context.Method,
-                ex.StatusCode,
-                ex.Status.Detail);
+            HandleException(ex, context);
             throw;
         }
-        catch (ArgumentException ex)
+    }
+
+    /// <summary>
+    /// Intercepts server streaming calls to log exceptions.
+    /// </summary>
+    /// <typeparam name="TRequest">The request message type.</typeparam>
+    /// <typeparam name="TResponse">The response message type.</typeparam>
+    /// <param name="request">The request message.</param>
+    /// <param name="responseStream">The response stream.</param>
+    /// <param name="context">The server call context.</param>
+    /// <param name="continuation">The continuation for the next interceptor or service method.</param>
+    /// <returns>A task representing the completion of the streaming call.</returns>
+    public override async Task ServerStreamingServerHandler<TRequest, TResponse>(
+        TRequest request,
+        IServerStreamWriter<TResponse> responseStream,
+        ServerCallContext context,
+        ServerStreamingServerMethod<TRequest, TResponse> continuation)
+    {
+        try
         {
-            _logger.LogWarning(
-                ex,
-                "Invalid argument for gRPC call to {Method}: {Message}",
-                context.Method,
-                ex.Message);
-            throw new RpcException(new Status(StatusCode.InvalidArgument, ex.Message));
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(
-                ex,
-                "Invalid operation for gRPC call to {Method}: {Message}",
-                context.Method,
-                ex.Message);
-            throw new RpcException(new Status(StatusCode.FailedPrecondition, ex.Message));
+            await continuation(request, responseStream, context);
         }
         catch (Exception ex)
         {
-            _logger.LogError(
-                ex,
-                "Unhandled exception in gRPC call to {Method}",
-                context.Method);
-            throw new RpcException(new Status(StatusCode.Internal, "An internal error occurred"));
+            HandleException(ex, context);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Intercepts client streaming calls to log exceptions.
+    /// </summary>
+    /// <typeparam name="TRequest">The request message type.</typeparam>
+    /// <typeparam name="TResponse">The response message type.</typeparam>
+    /// <param name="requestStream">The request stream.</param>
+    /// <param name="context">The server call context.</param>
+    /// <param name="continuation">The continuation for the next interceptor or service method.</param>
+    /// <returns>A task representing the response.</returns>
+    public override async Task<TResponse> ClientStreamingServerHandler<TRequest, TResponse>(
+        IAsyncStreamReader<TRequest> requestStream,
+        ServerCallContext context,
+        ClientStreamingServerMethod<TRequest, TResponse> continuation)
+    {
+        try
+        {
+            return await continuation(requestStream, context);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, context);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Intercepts duplex streaming calls to log exceptions.
+    /// </summary>
+    /// <typeparam name="TRequest">The request message type.</typeparam>
+    /// <typeparam name="TResponse">The response message type.</typeparam>
+    /// <param name="requestStream">The request stream.</param>
+    /// <param name="responseStream">The response stream.</param>
+    /// <param name="context">The server call context.</param>
+    /// <param name="continuation">The continuation for the next interceptor or service method.</param>
+    /// <returns>A task representing the completion of the streaming call.</returns>
+    public override async Task DuplexStreamingServerHandler<TRequest, TResponse>(
+        IAsyncStreamReader<TRequest> requestStream,
+        IServerStreamWriter<TResponse> responseStream,
+        ServerCallContext context,
+        DuplexStreamingServerMethod<TRequest, TResponse> continuation)
+    {
+        try
+        {
+            await continuation(requestStream, responseStream, context);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, context);
+            throw;
+        }
+    }
+
+    private void HandleException(Exception ex, ServerCallContext context)
+    {
+        switch (ex)
+        {
+            case RpcException rpcEx:
+                _logger.LogWarning(
+                    rpcEx,
+                    "gRPC call to {Method} failed with status {StatusCode}: {Detail}",
+                    context.Method,
+                    rpcEx.StatusCode,
+                    rpcEx.Status.Detail);
+                break;
+
+            case ArgumentException argEx:
+                _logger.LogWarning(
+                    argEx,
+                    "Invalid argument for gRPC call to {Method}: {Message}",
+                    context.Method,
+                    argEx.Message);
+                throw new RpcException(new Status(StatusCode.InvalidArgument, argEx.Message));
+
+            case InvalidOperationException invOpEx:
+                _logger.LogWarning(
+                    invOpEx,
+                    "Invalid operation for gRPC call to {Method}: {Message}",
+                    context.Method,
+                    invOpEx.Message);
+                throw new RpcException(new Status(StatusCode.FailedPrecondition, invOpEx.Message));
+
+            default:
+                _logger.LogError(
+                    ex,
+                    "Unhandled exception in gRPC call to {Method}",
+                    context.Method);
+                throw new RpcException(new Status(StatusCode.Internal, "An internal error occurred"));
         }
     }
 }
