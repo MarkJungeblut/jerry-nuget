@@ -4,15 +4,9 @@
 
 namespace Jerry.Library.Grpc.Tests.Interceptors;
 
-using System.Net.Http;
 using global::Grpc.Core;
-using global::Grpc.Net.Client;
 using Jerry.Library.Grpc.Interceptors;
-using Jerry.Library.Grpc.Tests.Services;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.DependencyInjection;
+using Jerry.Library.Grpc.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
@@ -20,53 +14,19 @@ using Xunit;
 /// <summary>
 /// Tests for <see cref="ExceptionLoggingInterceptor"/>.
 /// </summary>
-public class ExceptionLoggingInterceptorTests : IDisposable
+public class ExceptionLoggingInterceptorTests : IClassFixture<ExceptionLoggingTestFixture>
 {
     private readonly ILogger<ExceptionLoggingInterceptor> _mockLogger;
-    private readonly WebApplication _app;
     private readonly TestService.TestServiceClient _client;
-    private readonly GrpcChannel _channel;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ExceptionLoggingInterceptorTests"/> class.
     /// </summary>
-    public ExceptionLoggingInterceptorTests()
+    /// <param name="fixture">The gRPC server fixture with exception logging configured.</param>
+    public ExceptionLoggingInterceptorTests(ExceptionLoggingTestFixture fixture)
     {
-        // Enable HTTP/2 without TLS for testing
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
-        _mockLogger = Substitute.For<ILogger<ExceptionLoggingInterceptor>>();
-
-        var builder = WebApplication.CreateBuilder();
-
-        // Configure Kestrel to use HTTP/2 without TLS
-        builder.WebHost.ConfigureKestrel(serverOptions =>
-        {
-            serverOptions.Listen(System.Net.IPAddress.Loopback, 0, listenOptions =>
-            {
-                listenOptions.Protocols = HttpProtocols.Http2;
-            });
-        });
-
-        // Disable logging noise in tests
-        builder.Logging.ClearProviders();
-
-        // Register the interceptor with the mock logger
-        builder.Services.AddSingleton(_mockLogger);
-        builder.Services.AddGrpc(options =>
-        {
-            options.Interceptors.Add<ExceptionLoggingInterceptor>();
-        });
-
-        _app = builder.Build();
-        _app.MapGrpcService<TestServiceImpl>();
-
-        _app.StartAsync().Wait();
-
-        // Get the actual port and create channel
-        var address = _app.Urls.First();
-        _channel = GrpcChannel.ForAddress(address);
-        _client = new TestService.TestServiceClient(_channel);
+        _mockLogger = fixture.MockLogger;
+        _client = fixture.CreateClient<TestService.TestServiceClient>();
     }
 
     /// <summary>
@@ -203,15 +163,5 @@ public class ExceptionLoggingInterceptorTests : IDisposable
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ExceptionLoggingInterceptor(null!));
-    }
-
-    /// <summary>
-    /// Disposes the test resources.
-    /// </summary>
-    public void Dispose()
-    {
-        _channel?.Dispose();
-        _app?.StopAsync().Wait();
-        _app?.DisposeAsync().AsTask().Wait();
     }
 }
