@@ -92,4 +92,4 @@ public class MultiServiceTests : IClassFixture<GrpcServerFixture>
 - **HTTP/2 support**: Configured automatically for gRPC testing
 - **Dynamic port allocation**: Prevents port conflicts when running tests in parallel
 - **Fluent API**: Chain configuration methods for clean test setup
-- **Automatic cleanup**: Implements `IAsyncDisposable` for proper resource management
+- **Automatic cleanup**: Implements `IDisposable` for proper resource management

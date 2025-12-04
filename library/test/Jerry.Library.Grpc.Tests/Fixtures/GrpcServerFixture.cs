@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 /// Use with IClassFixture&lt;GrpcServerFixture&gt; to get one server instance per test class.
 /// The server starts lazily on first access to Channel or CreateClient.
 /// </remarks>
-public class GrpcServerFixture : IAsyncDisposable
+public class GrpcServerFixture : IDisposable
 {
     private readonly object _lock = new();
     private readonly List<Action<IServiceCollection>> _serviceConfigurators = new();
@@ -119,18 +119,15 @@ public class GrpcServerFixture : IAsyncDisposable
     /// <summary>
     /// Disposes the gRPC channel and stops the server.
     /// </summary>
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
-        if (_channel != null)
-        {
-            _channel.Dispose();
-            _channel = null;
-        }
+        _channel?.Dispose();
+        _channel = null;
 
         if (_app != null)
         {
-            await _app.StopAsync();
-            await _app.DisposeAsync();
+            _app.StopAsync().Wait();
+            _app.DisposeAsync().AsTask().Wait();
             _app = null;
         }
     }
